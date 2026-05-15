@@ -1,14 +1,23 @@
-# playbook/templates/lighthouse.conf.j2
 server {
     listen 80;
     server_name _;
+    root {{ lighthouse_location_dir | default('/usr/share/nginx/html/lighthouse') }};
+    index index.php index.html;
 
     location / {
-        root /usr/share/nginx/html/lighthouse;
-        index index.html index.htm;
-        try_files $uri $uri/ /index.html;
+        try_files $uri $uri/ /index.php?$query_string;
     }
 
-    access_log /var/log/nginx/lighthouse.access.log main;
-    error_log /var/log/nginx/lighthouse.error.log warn;
+    # === PHP-FPM обработка ===
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_pass unix:/run/php/php8.1-fpm.sock;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+
+    # === Блокируем доступ к скрытым файлам ===
+    location ~ /\. {
+        deny all;
+    }
 }

@@ -1,13 +1,12 @@
-#SPDX-License-Identifier: MIT-0
 ---
 # handlers file for lighthouse-role
----
-- name: Start nginx service
-  ansible.builtin.service:
-    name: nginx
-    state: started
 
-- name: Reload nginx
+- name: Restart php-fpm
+  ansible.builtin.service:
+    name: php8.1-fpm
+    state: restarted
+
+- name: Restart nginx
   ansible.builtin.service:
     name: nginx
-    state: reloaded
+    state: restarted

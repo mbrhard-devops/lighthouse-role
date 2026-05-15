@@ -1,56 +1,60 @@
-#SPDX-License-Identifier: MIT-0
 ---
 # tasks file for lighthouse-role
 
-# === NGINX SETUP ===
-- name: Nginx | Update apt cache
+- name: Lighthouse | Install system packages
   ansible.builtin.apt:
-    update_cache: true
+    name:
+      - nginx
+      - php-fpm
+      - git
+    state: present
+    update_cache: yes
     cache_valid_time: 3600
 
-- name: Nginx | Install nginx
-  ansible.builtin.apt:
-    name: nginx
-    state: present
-  notify: Start nginx
-
-- name: Nginx | Disable default site
+- name: Lighthouse | Disable default nginx site
   ansible.builtin.file:
-    path: "{{ nginx_sites_enabled }}/default"
+    path: /etc/nginx/sites-enabled/default
     state: absent
-  notify: Reload nginx
+  notify: Restart nginx
 
-- name: Nginx | Deploy main config
+- name: Lighthouse | Deploy main nginx config
   ansible.builtin.template:
     src: nginx.conf.j2
-    dest: "{{ nginx_config_file }}"
+    dest: /etc/nginx/nginx.conf
     mode: '0644'
-    validate: nginx -t -c %s
-  notify: Reload nginx
-
-# === LIGHTHOUSE SETUP ===
-- name: Lighthouse | Install git
-  ansible.builtin.apt:
-    name: git
-    state: present
+    owner: root
+    group: root
+  notify:
+    - Restart php-fpm
+    - Restart nginx
 
 - name: Lighthouse | Clone repository
   ansible.builtin.git:
-    repo: "{{ lighthouse_vcs }}"
-    version: "{{ lighthouse_version }}"
-    dest: "{{ lighthouse_location_dir }}"
-    force: true
-    update: true
+    repo: "{{ lighthouse_vcs | default('https://github.com/VKCOM/lighthouse.git') }}"
+    dest: "{{ lighthouse_location_dir | default('/usr/share/nginx/html/lighthouse') }}"
+    version: master
+    force: yes
+  notify:
+    - Restart php-fpm
+    - Restart nginx
 
 - name: Lighthouse | Deploy nginx vhost config
   ansible.builtin.template:
     src: lighthouse.conf.j2
-    dest: "{{ nginx_conf_d }}/lighthouse.conf"
+    dest: /etc/nginx/conf.d/lighthouse.conf
     mode: '0644'
-  notify: Reload nginx
+    owner: root
+    group: root
+  notify:
+    - Restart php-fpm
+    - Restart nginx
 
-- name: Lighthouse | Ensure nginx is running
-  ansible.builtin.service:
-    name: nginx
+- name: Lighthouse | Ensure services are enabled and running
+  ansible.builtin.systemd:
+    name: "{{ item }}"
     state: started
-    enabled: true
+    enabled: yes
+    daemon_reload: yes
+  loop:
+    - php8.1-fpm
+    - nginx
