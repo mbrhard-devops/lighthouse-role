@@ -1,0 +1,18 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for lighthouse-role
+
+# Nginx settings
+nginx_user: www-data
+nginx_worker_processes: auto
+nginx_config_file: /etc/nginx/nginx.conf
+nginx_sites_enabled: /etc/nginx/sites-enabled
+nginx_conf_d: /etc/nginx/conf.d
+
+# LightHouse settings
+lighthouse_vcs: "https://github.com/AlexeySetevoi/lighthouse.git"
+lighthouse_version: "master"
+lighthouse_location_dir: /var/www/lighthouse
+
+# Ports
+nginx_http_port: 80

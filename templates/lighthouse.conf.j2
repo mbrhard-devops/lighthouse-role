@@ -1,0 +1,14 @@
+# playbook/templates/lighthouse.conf.j2
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        root /usr/share/nginx/html/lighthouse;
+        index index.html index.htm;
+        try_files $uri $uri/ /index.html;
+    }
+
+    access_log /var/log/nginx/lighthouse.access.log main;
+    error_log /var/log/nginx/lighthouse.error.log warn;
+}
